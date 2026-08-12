@@ -2,20 +2,22 @@
 query.py
 --------
 Faz uma pergunta, busca os trechos mais relevantes nos PDFs indexados
-e usa um LLM (Claude, via API da Anthropic) para responder com base
+e usa um LLM (gemini, via API da Google) para responder com base
 nesses trechos.
 
 Como usar:
     1. Rode ingest.py primeiro
-    2. Crie um arquivo .env com: ANTHROPIC_API_KEY=sua_chave_aqui
+    2. Crie um arquivo .env com: GEMINI_API_KEY=sua_chave_aqui
     3. Rode: python query.py
 """
 
 import os
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 from dotenv import load_dotenv
 import chromadb
 from chromadb.utils import embedding_functions
-import anthropic
+from google import genai
 
 load_dotenv()
 
@@ -52,7 +54,11 @@ def main():
         embedding_function=funcao_embedding,
     )
 
-    cliente_anthropic = anthropic.Anthropic()  # lê ANTHROPIC_API_KEY do .env automaticamente
+    # Configuração do cliente Gemini (lê a GEMINI_API_KEY do .env)
+    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+    
+
+
 
     print("Assistente de estudos pronto. Digite 'sair' para encerrar.\n")
 
@@ -72,13 +78,13 @@ def main():
 
         prompt = montar_prompt(pergunta, trechos_recuperados)
 
-        resposta = cliente_anthropic.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=1000,
-            messages=[{"role": "user", "content": prompt}],
+        # Chamada para a API do Google (Gemini)
+        resposta = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
         )
 
-        print(f"\nResposta: {resposta.content[0].text}\n")
+        print(f"\nResposta: {resposta.text}\n")
 
 
 if __name__ == "__main__":

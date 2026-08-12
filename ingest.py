@@ -10,6 +10,8 @@ Como usar:
 """
 
 import os
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 from pypdf import PdfReader
 import chromadb
 from chromadb.utils import embedding_functions
