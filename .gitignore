@@ -1,0 +1,25 @@
+# Ambiente e segredos
+.env
+*.env
+
+# Banco vetorial (dados gerados, não precisa versionar)
+banco_vetorial/
+
+# PDFs pessoais (opcional - remova esta linha se quiser versionar os materiais)
+materiais/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+primeiro_rag/
+.primeiro_rag/
+*.egg-info/
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store
