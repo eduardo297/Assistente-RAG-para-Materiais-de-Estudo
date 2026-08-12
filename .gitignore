@@ -15,8 +15,8 @@ __pycache__/
 *.pyd
 .Python
 env/
-primeiro_rag/
-.primeiro_rag/
+venv/
+.venv/
 *.egg-info/
 
 # Editor / SO
