@@ -1,67 +1,141 @@
 """
-ingest.py
----------
-Lê todos os PDFs da pasta 'materiais/', quebra o texto em pedaços
-(chunks), gera embeddings e salva tudo num banco vetorial local (ChromaDB).
+Lê os arquivos da pasta 'materiais/', quebra o texto em pedaços
+(chunks), gera embeddings e salva tudo em um banco vetorial local
+(ChromaDB).
 
 Como usar:
-    1. Coloque seus PDFs dentro da pasta 'materiais/'
-    2. Rode: python ingest.py
+1. Coloque seus materiais dentro da pasta 'materiais/'
+2. Rode: python ingest.py
 """
 
 import os
+
 os.environ["ANONYMIZED_TELEMETRY"] = "False"
 
-from pypdf import PdfReader
 import chromadb
 from chromadb.utils import embedding_functions
 
+import ingestion.loader as loader
+
+
 PASTA_MATERIAIS = "materiais"
 PASTA_BANCO = "banco_vetorial"
-TAMANHO_CHUNK = 800        # caracteres por pedaço de texto
-SOBREPOSICAO = 100         # sobreposição entre pedaços, ajuda a não cortar frases no meio
+
+TAMANHO_CHUNK = 800
+SOBREPOSICAO = 100
+
+EXTENSOES_SUPORTADAS = {
+    ".pdf",
+    ".docx",
+    ".txt",
+    ".pptx"
+}
 
 
-def extrair_texto_pdf(caminho_pdf: str) -> str:
-    """Extrai todo o texto de um arquivo PDF."""
-    leitor = PdfReader(caminho_pdf)
-    texto_completo = ""
-    for pagina in leitor.pages:
-        texto_pagina = pagina.extract_text() or ""
-        texto_completo += texto_pagina + "\n"
-    return texto_completo
+def quebrar_em_chunks(
+    informacoes: list[dict],
+    tamanho: int,
+    sobreposicao: int
+) -> list[dict]:
+    """Agrupa parágrafos em chunks mantendo sobreposição e metadados."""
 
-
-def quebrar_em_chunks(texto: str, tamanho: int, sobreposicao: int) -> list[str]:
-    """Quebra um texto longo em pedaços menores, com sobreposição entre eles."""
     chunks = []
-    inicio = 0
-    while inicio < len(texto):
-        fim = inicio + tamanho
-        chunk = texto[inicio:fim].strip()
-        if chunk:
-            chunks.append(chunk)
-        inicio += tamanho - sobreposicao
+
+    chunk_atual = ""
+    metadados_atual = []
+
+    for informacao in informacoes:
+
+        texto = informacao["texto"].strip()
+
+        if not texto:
+            continue
+
+        candidato = (
+            chunk_atual + "\n\n" + texto
+            if chunk_atual
+            else texto
+        )
+
+        if len(candidato) <= tamanho:
+
+            chunk_atual = candidato
+
+            metadados_atual.append(
+                informacao["metadados"]
+            )
+
+        else:
+
+            if chunk_atual:
+                chunks.append({
+                    "texto": chunk_atual.strip(),
+                    "metadados": metadados_atual.copy()
+                })
+
+            overlap = (
+                chunk_atual[-sobreposicao:]
+                if chunk_atual
+                else ""
+            )
+
+            chunk_atual = (
+                overlap + "\n\n" + texto
+                if overlap
+                else texto
+            )
+
+            metadados_atual = [
+                informacao["metadados"]
+            ]
+
+    if chunk_atual:
+        chunks.append({
+            "texto": chunk_atual.strip(),
+            "metadados": metadados_atual.copy()
+        })
+
     return chunks
 
 
 def main():
+
     if not os.path.isdir(PASTA_MATERIAIS):
         os.makedirs(PASTA_MATERIAIS)
-        print(f"Criei a pasta '{PASTA_MATERIAIS}/'. Coloque seus PDFs lá e rode o script de novo.")
+
+        print(
+            f"Criei a pasta '{PASTA_MATERIAIS}/'. "
+            "Coloque seus materiais lá e rode o script novamente."
+        )
+
         return
 
-    arquivos_pdf = [f for f in os.listdir(PASTA_MATERIAIS) if f.lower().endswith(".pdf")]
-    if not arquivos_pdf:
-        print(f"Nenhum PDF encontrado em '{PASTA_MATERIAIS}/'. Adicione arquivos e rode novamente.")
+    arquivos = [
+        f
+        for f in os.listdir(PASTA_MATERIAIS)
+        if os.path.splitext(f)[1].lower()
+        in EXTENSOES_SUPORTADAS
+    ]
+
+    if not arquivos:
+        print(
+            f"Nenhum material encontrado em "
+            f"'{PASTA_MATERIAIS}/'."
+        )
+
         return
 
     # Cliente do ChromaDB salvando localmente em disco
-    cliente = chromadb.PersistentClient(path=PASTA_BANCO)
+    cliente = chromadb.PersistentClient(
+        path=PASTA_BANCO
+    )
 
-    # Função de embedding local e gratuita (roda no seu computador, sem API)
-    funcao_embedding = embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name="all-MiniLM-L6-v2"
+    # Embeddings locais
+    funcao_embedding = (
+        embedding_functions
+        .SentenceTransformerEmbeddingFunction(
+            model_name="all-MiniLM-L6-v2"
+        )
     )
 
     colecao = cliente.get_or_create_collection(
@@ -70,22 +144,94 @@ def main():
     )
 
     total_chunks = 0
-    for nome_arquivo in arquivos_pdf:
-        caminho = os.path.join(PASTA_MATERIAIS, nome_arquivo)
+
+    for nome_arquivo in arquivos:
+
+        caminho = os.path.join(
+            PASTA_MATERIAIS,
+            nome_arquivo
+        )
+
         print(f"Processando: {nome_arquivo}")
 
-        texto = extrair_texto_pdf(caminho)
-        chunks = quebrar_em_chunks(texto, TAMANHO_CHUNK, SOBREPOSICAO)
+        extensao = os.path.splitext(nome_arquivo)[1].lower()
 
-        ids = [f"{nome_arquivo}_chunk_{i}" for i in range(len(chunks))]
-        metadados = [{"fonte": nome_arquivo, "chunk_num": i} for i in range(len(chunks))]
+        loader_func = loader.retornar_loader_por_extensao(
+            extensao
+        )
 
-        if chunks:
-            colecao.upsert(documents=chunks, ids=ids, metadatas=metadados)
-            total_chunks += len(chunks)
-            print(f"  -> {len(chunks)} pedaços indexados")
+        if not loader_func:
+            print(
+                f"  -> Arquivo '{nome_arquivo}' "
+                "tem extensão não suportada."
+            )
+            continue
 
-    print(f"\nConcluído! {total_chunks} pedaços de texto indexados em '{PASTA_BANCO}/'.")
+        # Loader retorna:
+        # [
+        #     {
+        #         "texto": "...",
+        #         "metadados": {...}
+        #     }
+        # ]
+        informacoes = loader_func(caminho)
+
+        chunks = quebrar_em_chunks(
+            informacoes,
+            TAMANHO_CHUNK,
+            SOBREPOSICAO
+        )
+
+        ids = [
+            f"{nome_arquivo}_chunk_{i}"
+            for i in range(len(chunks))
+        ]
+
+        documentos = [
+            chunk["texto"]
+            for chunk in chunks
+        ]
+
+        metadados = []
+
+        for i, chunk in enumerate(chunks):
+
+            metadata = {
+                "fonte": nome_arquivo,
+                "chunk_num": i
+            }
+
+            # Utiliza os metadados do primeiro
+            # elemento que originou o chunk.
+            if chunk["metadados"]:
+
+                primeiro_metadata = (
+                    chunk["metadados"][0]
+                )
+
+                for chave, valor in primeiro_metadata.items():
+                    metadata[chave] = valor
+
+            metadados.append(metadata)
+
+        if documentos:
+
+            colecao.upsert(
+                documents=documentos,
+                ids=ids,
+                metadatas=metadados
+            )
+
+            total_chunks += len(documentos)
+
+            print(
+                f"  -> {len(documentos)} pedaços indexados"
+            )
+
+    print(
+        f"\nConcluído! {total_chunks} pedaços "
+        f"de texto indexados em '{PASTA_BANCO}/'."
+    )
 
 
 if __name__ == "__main__":
