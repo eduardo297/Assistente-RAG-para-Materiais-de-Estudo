@@ -45,18 +45,14 @@ def main():
         if not pergunta:
             continue
 
-        # --------------------------------------------------
-        # 1. Busca os trechos relevantes
-        # --------------------------------------------------
 
         resultado = buscar_documentos(
             pergunta,
             quantidade=QTD_CHUNKS_RECUPERADOS
         )
 
-        trechos_recuperados = (
-            resultado["documents"][0]
-        )
+        trechos_recuperados = resultado["documents"][0]     
+        metadados_recuperados = resultado["metadatas"][0]
 
         if not trechos_recuperados:
 
@@ -67,7 +63,6 @@ def main():
 
             continue
 
-       
 
         resposta = gerar_resposta(
             cliente_gemini,
@@ -78,6 +73,20 @@ def main():
         print(
             f"\nResposta: {resposta}\n"
         )
+
+        print("Fontes:")
+
+        for metadata in metadados_recuperados:
+
+            fonte = metadata.get("fonte", "desconhecida")
+            paragrafo = metadata.get("paragrafo")
+
+            print(f"  📄 {fonte}", end="")
+
+            if paragrafo:
+                print(f" — parágrafo {paragrafo}", end="")
+
+        print()
 
 
 if __name__ == "__main__":
