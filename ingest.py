@@ -4,22 +4,19 @@ Lê os arquivos da pasta 'materiais/', quebra o texto em pedaços
 (ChromaDB).
 
 Como usar:
+
 1. Coloque seus materiais dentro da pasta 'materiais/'
 2. Rode: python ingest.py
 """
 
 import os
 
-os.environ["ANONYMIZED_TELEMETRY"] = "False"
-import chromadb
-from chromadb.config import Settings
-from chromadb.utils import embedding_functions
-
-import ingestion.loader as loader
+import app.embeddings.embedding_model as embedding_model
+import app.ingestion.loader as loader
+from app.database.chroma import criar_cliente, obter_colecao
 
 
 PASTA_MATERIAIS = "materiais"
-PASTA_BANCO = "banco_vetorial"
 
 TAMANHO_CHUNK = 800
 SOBREPOSICAO = 100
@@ -36,7 +33,7 @@ def quebrar_em_chunks(
     informacoes: list[dict],
     tamanho: int,
     sobreposicao: int
-):
+) -> list[dict]:
     """Agrupa parágrafos em chunks mantendo sobreposição e metadados."""
 
     chunks = []
@@ -100,7 +97,10 @@ def quebrar_em_chunks(
 
 def main():
 
+    
+
     if not os.path.isdir(PASTA_MATERIAIS):
+
         os.makedirs(PASTA_MATERIAIS)
 
         print(
@@ -110,6 +110,8 @@ def main():
 
         return
 
+    
+
     arquivos = [
         f
         for f in os.listdir(PASTA_MATERIAIS)
@@ -118,6 +120,7 @@ def main():
     ]
 
     if not arquivos:
+
         print(
             f"Nenhum material encontrado em "
             f"'{PASTA_MATERIAIS}/'."
@@ -125,24 +128,22 @@ def main():
 
         return
 
-    # Cliente do ChromaDB salvando localmente em disco
-    cliente = chromadb.PersistentClient(
-        path=PASTA_BANCO,
-        settings=Settings(anonymized_telemetry=False)
-    )
+   
 
-    # Embeddings locais
     funcao_embedding = (
-        embedding_functions
-        .SentenceTransformerEmbeddingFunction(
-            model_name="all-MiniLM-L6-v2"
-        )
+        embedding_model.criar_funcao_embedding()
     )
 
-    colecao = cliente.get_or_create_collection(
-        name="materiais_estudo",
-        embedding_function=funcao_embedding,
+    
+
+    cliente = criar_cliente()
+
+    colecao = obter_colecao(
+        cliente,
+        funcao_embedding
     )
+
+  
 
     total_chunks = 0
 
@@ -153,46 +154,69 @@ def main():
             nome_arquivo
         )
 
-        print(f"Processando: {nome_arquivo}")
+        print(
+            f"\nProcessando: {nome_arquivo}"
+        )
 
-        extensao = os.path.splitext(nome_arquivo)[1].lower()
+        extensao = os.path.splitext(
+            nome_arquivo
+        )[1].lower()
 
-        loader_func = loader.retornar_loader_por_extensao(
-            extensao
+       
+
+        loader_func = (
+            loader.retornar_loader_por_extensao(
+                extensao
+            )
         )
 
         if not loader_func:
+
             print(
                 f"  -> Arquivo '{nome_arquivo}' "
                 "tem extensão não suportada."
             )
+
             continue
 
-        # Loader retorna:
-        # [
-        #     {
-        #         "texto": "...",
-        #         "metadados": {...}
-        #     }
-        # ]
+        
         informacoes = loader_func(caminho)
 
+        if not informacoes:
+
+            print(
+                "  -> Nenhum texto encontrado."
+            )
+
+            continue
+
+       
         chunks = quebrar_em_chunks(
             informacoes,
             TAMANHO_CHUNK,
             SOBREPOSICAO
         )
 
+        if not chunks:
+
+            print(
+                "  -> Nenhum chunk gerado."
+            )
+
+            continue
+
         ids = [
             f"{nome_arquivo}_chunk_{i}"
             for i in range(len(chunks))
         ]
 
+      
         documentos = [
             chunk["texto"]
             for chunk in chunks
         ]
 
+       
         metadados = []
 
         for i, chunk in enumerate(chunks):
@@ -202,8 +226,7 @@ def main():
                 "chunk_num": i
             }
 
-            # Utiliza os metadados do primeiro
-            # elemento que originou o chunk.
+            # Pega os metadados da origem
             if chunk["metadados"]:
 
                 primeiro_metadata = (
@@ -211,27 +234,29 @@ def main():
                 )
 
                 for chave, valor in primeiro_metadata.items():
+
                     metadata[chave] = valor
 
             metadados.append(metadata)
 
-        if documentos:
+    
+        colecao.upsert(
+            documents=documentos,
+            ids=ids,
+            metadatas=metadados
+        )
 
-            colecao.upsert(
-                documents=documentos,
-                ids=ids,
-                metadatas=metadados
-            )
+        total_chunks += len(documentos)
 
-            total_chunks += len(documentos)
+        print(
+            f"  -> {len(documentos)} pedaços indexados"
+        )
 
-            print(
-                f"  -> {len(documentos)} pedaços indexados"
-            )
+
 
     print(
         f"\nConcluído! {total_chunks} pedaços "
-        f"de texto indexados em '{PASTA_BANCO}/'."
+        "de texto indexados no ChromaDB."
     )
 
 
