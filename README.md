@@ -11,14 +11,14 @@ para responder dúvidas com base em PDFs de materiais de estudo da faculdade.
 2. **Busca**: quando o usuário faz uma pergunta, o sistema busca no banco vetorial
    os trechos de texto mais parecidos semanticamente com a pergunta.
 3. **Geração**: os trechos recuperados são enviados junto com a pergunta para o
-   modelo Claude (Anthropic), que gera uma resposta baseada apenas nesse contexto.
+   modelo gemini (Google), que gera uma resposta baseada apenas nesse contexto.
 
 ## Stack
 
 - **Python**
 - **ChromaDB** — banco vetorial local
 - **sentence-transformers** — geração de embeddings (roda localmente, sem custo)
-- **Claude API (Anthropic)** — geração da resposta final
+- **gemini API (Google)** — geração da resposta final
 
 ## Como rodar
 
@@ -34,7 +34,7 @@ mkdir materiais
 python ingest.py
 
 # 4. Criar arquivo .env com sua chave de API
-echo "ANTHROPIC_API_KEY=sua_chave_aqui" > .env
+echo "GEMINI_API_KEY=sua_chave_aqui" > .env
 
 # 5. Fazer perguntas
 python query.py

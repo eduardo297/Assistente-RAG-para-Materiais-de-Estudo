@@ -11,8 +11,8 @@ Como usar:
 import os
 
 os.environ["ANONYMIZED_TELEMETRY"] = "False"
-
 import chromadb
+from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 
 import ingestion.loader as loader
@@ -36,7 +36,7 @@ def quebrar_em_chunks(
     informacoes: list[dict],
     tamanho: int,
     sobreposicao: int
-) -> list[dict]:
+):
     """Agrupa parágrafos em chunks mantendo sobreposição e metadados."""
 
     chunks = []
@@ -127,7 +127,8 @@ def main():
 
     # Cliente do ChromaDB salvando localmente em disco
     cliente = chromadb.PersistentClient(
-        path=PASTA_BANCO
+        path=PASTA_BANCO,
+        settings=Settings(anonymized_telemetry=False)
     )
 
     # Embeddings locais

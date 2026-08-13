@@ -1,7 +1,7 @@
-import docx_loader
-import pdf_loader
-import pptx_loader
-import txt_loader
+from ingestion import docx_loader
+from ingestion import pdf_loader
+from ingestion import pptx_loader
+from ingestion import txt_loader
 
 loaders = {
         ".pdf": pdf_loader.extrair_texto_pdf,
