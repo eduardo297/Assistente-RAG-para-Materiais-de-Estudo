@@ -85,15 +85,27 @@ def main():
  
         print("Fontes:")
  
-        for metadata in metadados_recuperados:
+        distancias_recuperadas = resultado["distances"][0]
+ 
+        for metadata, distancia in zip(
+            metadados_recuperados,
+            distancias_recuperadas
+        ):
  
             fonte = metadata.get("fonte", "desconhecida")
             paragrafo = metadata.get("paragrafo")
  
-            print(f" 📄 {fonte}", end="")
+            print(f"  📄 {fonte}", end="")
  
             if paragrafo:
                 print(f" — parágrafo {paragrafo}", end="")
+ 
+            # distância: quanto MENOR, mais parecido com a pergunta.
+            # Rode várias perguntas e observe esses valores para
+            # decidir depois um bom DISTANCIA_MAXIMA.
+            print(f" (distância: {distancia:.3f})", end="")
+ 
+            print()
  
         print()
  

@@ -29,7 +29,8 @@ def montar_prompt(
 Você é um assistente de estudos.
 
 Responda a pergunta do aluno usando APENAS
-as informações presentes no contexto abaixo.
+as informações presentes no contexto abaixo
+e mostre a fonte da informação.
 
 Se a resposta não estiver no contexto,
 diga claramente que não encontrou essa

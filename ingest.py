@@ -179,8 +179,15 @@ def main():
 
             continue
 
-        
-        informacoes = loader_func(caminho)
+        try:
+            informacoes = loader_func(caminho)
+        except Exception as erro:
+            # Um arquivo corrompido ou ilegível não deve travar o
+            # processamento dos demais — pula e continua o loop.
+            print(
+                f"  -> Erro ao ler '{nome_arquivo}': {erro}"
+            )
+            continue
 
         if not informacoes:
 
