@@ -16,6 +16,7 @@ def extrair_texto_docx(caminho):
             "texto": texto,
             "metadados": {
                 "fonte": caminho,
+                "pagina": 1,  # O python-docx não fornece informações de página, então definimos como 1
                 "paragrafo": i + 1
             }
         })

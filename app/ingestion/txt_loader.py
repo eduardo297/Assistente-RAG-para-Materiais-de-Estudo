@@ -17,6 +17,7 @@ def extrair_texto_txt(caminho):
             "texto": paragrafo,
             "metadados": {
                 "fonte": caminho,
+                "pagina": 1,  # Arquivos de texto não possuem informações de página, então definimos como 1
                 "paragrafo": i + 1
             }
         })

@@ -28,13 +28,91 @@ EXTENSOES_SUPORTADAS = {
     ".pptx"
 }
 
+import re
+
+
+def dividir_texto_grande(
+    texto: str,
+    tamanho: int
+) -> list[str]:
+    """
+    Divide um texto grande em partes menores,
+    tentando respeitar as frases.
+    """
+
+    if len(texto) <= tamanho:
+        return [texto]
+
+    # Divide o texto em frases.
+    frases = re.split(
+        r'(?<=[.!?])\s+',
+        texto
+    )
+
+    partes = []
+    parte_atual = ""
+
+    for frase in frases:
+
+        frase = frase.strip()
+
+        if not frase:
+            continue
+
+        candidato = (
+            parte_atual + " " + frase
+            if parte_atual
+            else frase
+        )
+
+        if len(candidato) <= tamanho:
+
+            parte_atual = candidato
+
+        else:
+
+            if parte_atual:
+                partes.append(
+                    parte_atual.strip()
+                )
+
+            # Caso uma frase sozinha seja maior
+            # que o tamanho máximo.
+            if len(frase) > tamanho:
+
+                inicio = 0
+
+                while inicio < len(frase):
+
+                    fim = inicio + tamanho
+
+                    partes.append(
+                        frase[inicio:fim].strip()
+                    )
+
+                    inicio = fim
+
+                parte_atual = ""
+
+            else:
+
+                parte_atual = frase
+
+    if parte_atual:
+        partes.append(
+            parte_atual.strip()
+        )
+
+    return partes
+
+
 
 def quebrar_em_chunks(
     informacoes: list[dict],
     tamanho: int,
     sobreposicao: int
 ) -> list[dict]:
-    """Agrupa parágrafos em chunks mantendo sobreposição e metadados."""
+    """Agrupa parágrafos em chunks respeitando limites de frases."""
 
     chunks = []
 
@@ -48,52 +126,63 @@ def quebrar_em_chunks(
         if not texto:
             continue
 
-        candidato = (
-            chunk_atual + "\n\n" + texto
-            if chunk_atual
-            else texto
+        # Se o parágrafo for maior que o tamanho do chunk,
+        # divide primeiro em partes menores.
+        partes = dividir_texto_grande(
+            texto,
+            tamanho
         )
 
-        if len(candidato) <= tamanho:
+        for parte in partes:
 
-            chunk_atual = candidato
-
-            metadados_atual.append(
-                informacao["metadados"]
-            )
-
-        else:
-
-            if chunk_atual:
-                chunks.append({
-                    "texto": chunk_atual.strip(),
-                    "metadados": metadados_atual.copy()
-                })
-
-            overlap = (
-                chunk_atual[-sobreposicao:]
+            candidato = (
+                chunk_atual + "\n\n" + parte
                 if chunk_atual
-                else ""
+                else parte
             )
 
-            chunk_atual = (
-                overlap + "\n\n" + texto
-                if overlap
-                else texto
-            )
+            if len(candidato) <= tamanho:
 
-            metadados_atual = [
-                informacao["metadados"]
-            ]
+                chunk_atual = candidato
+
+                metadados_atual.append(
+                    informacao["metadados"]
+                )
+
+            else:
+
+                if chunk_atual:
+
+                    chunks.append({
+                        "texto": chunk_atual.strip(),
+                        "metadados": metadados_atual.copy()
+                    })
+
+                # Sobreposição entre chunks.
+                overlap = (
+                    chunk_atual[-sobreposicao:]
+                    if chunk_atual
+                    else ""
+                )
+
+                chunk_atual = (
+                    overlap + "\n\n" + parte
+                    if overlap
+                    else parte
+                )
+
+                metadados_atual = [
+                    informacao["metadados"]
+                ]
 
     if chunk_atual:
+
         chunks.append({
             "texto": chunk_atual.strip(),
             "metadados": metadados_atual.copy()
         })
 
     return chunks
-
 
 def main():
 
@@ -230,19 +319,47 @@ def main():
 
             metadata = {
                 "fonte": nome_arquivo,
+                "tipo": extensao.replace(".", ""),
                 "chunk_num": i
             }
 
-            # Pega os metadados da origem
             if chunk["metadados"]:
 
-                primeiro_metadata = (
-                    chunk["metadados"][0]
-                )
+                primeiro = chunk["metadados"][0]
+                ultimo = chunk["metadados"][-1]
 
-                for chave, valor in primeiro_metadata.items():
+                # Parágrafos
+                if "paragrafo" in primeiro:
 
-                    metadata[chave] = valor
+                    metadata["paragrafo_inicial"] = (
+                        primeiro["paragrafo"]
+                    )
+
+                    metadata["paragrafo_final"] = (
+                        ultimo["paragrafo"]
+                    )
+
+                # Páginas
+                if "pagina" in primeiro:
+
+                    metadata["pagina_inicial"] = (
+                        primeiro["pagina"]
+                    )
+
+                    metadata["pagina_final"] = (
+                        ultimo["pagina"]
+                    )
+
+                # Slides
+                if "slide" in primeiro:
+
+                    metadata["slide_inicial"] = (
+                        primeiro["slide"]
+                    )
+
+                    metadata["slide_final"] = (
+                        ultimo["slide"]
+                    )
 
             metadados.append(metadata)
 

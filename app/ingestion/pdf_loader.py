@@ -8,7 +8,7 @@ def extrair_texto_pdf(caminho_pdf: str):
 
     numero_paragrafo = 1
 
-    for pagina in leitor.pages:
+    for numero_pagina, pagina in enumerate(leitor.pages, start=1):
         texto_pagina = pagina.extract_text() or ""
 
         if not texto_pagina.strip():
@@ -26,6 +26,7 @@ def extrair_texto_pdf(caminho_pdf: str):
                 "texto": paragrafo,
                 "metadados": {
                     "fonte": caminho_pdf,
+                    "pagina": numero_pagina,
                     "paragrafo": numero_paragrafo
                 }
             })
