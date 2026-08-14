@@ -5,7 +5,7 @@ PASTA_BANCO = "database/chroma"
 NOME_COLECAO = "materiais_estudo"
 
 
-def criar_cliente():
+def criar_cliente_chroma():
     """Cria o cliente do ChromaDB persistido em disco."""
 
     cliente = chromadb.PersistentClient(

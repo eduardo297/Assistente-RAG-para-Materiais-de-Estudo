@@ -13,7 +13,7 @@ import os
 
 import app.embeddings.embedding_model as embedding_model
 import app.ingestion.loader as loader
-from app.database.chroma import criar_cliente, obter_colecao
+from app.database.chroma import criar_cliente_chroma, obter_colecao
 
 
 PASTA_MATERIAIS = "materiais"
@@ -136,7 +136,7 @@ def main():
 
     
 
-    cliente = criar_cliente()
+    cliente = criar_cliente_chroma()
 
     colecao = obter_colecao(
         cliente,
@@ -239,6 +239,10 @@ def main():
 
             metadados.append(metadata)
 
+        # Remove chunks antigos desse mesmo arquivo antes de reinserir.
+        # Evita "chunks órfãos" quando o novo chunking gera menos
+        # pedaços do que da vez anterior (ex: arquivo editado).
+        colecao.delete(where={"fonte": nome_arquivo})
     
         colecao.upsert(
             documents=documentos,

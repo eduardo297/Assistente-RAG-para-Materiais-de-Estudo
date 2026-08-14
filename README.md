@@ -5,13 +5,22 @@ para responder dúvidas com base em PDFs de materiais de estudo da faculdade.
 
 ## Como funciona
 
-1. **Ingestão**: os PDFs são lidos, o texto é quebrado em pedaços menores (chunks)
-   e transformado em embeddings (representações numéricas do significado do texto),
-   salvos num banco vetorial local (ChromaDB).
-2. **Busca**: quando o usuário faz uma pergunta, o sistema busca no banco vetorial
-   os trechos de texto mais parecidos semanticamente com a pergunta.
-3. **Geração**: os trechos recuperados são enviados junto com a pergunta para o
-   modelo gemini (Google), que gera uma resposta baseada apenas nesse contexto.
+O projeto é dividido em quatro etapas principais:
+
+```text
+Materiais
+   ↓
+Ingestão
+   ↓
+Chunks + Embeddings
+   ↓
+ChromaDB
+   ↓
+Busca semântica
+   ↓
+Google Gemini
+   ↓
+Resposta
 
 ## Stack
 
@@ -19,6 +28,46 @@ para responder dúvidas com base em PDFs de materiais de estudo da faculdade.
 - **ChromaDB** — banco vetorial local
 - **sentence-transformers** — geração de embeddings (roda localmente, sem custo)
 - **gemini API (Google)** — geração da resposta final
+
+## estrutura atual 
+
+primeiro_rag/
+│
+├── app/
+│   ├── database/
+│   │   ├── __init__.py
+│   │   └── chroma.py
+│   │
+│   ├── embeddings/
+│   │   ├── __init__.py
+│   │   └── embedding_model.py
+│   │
+│   ├── ingestion/
+│   │   ├── __init__.py
+│   │   ├── loader.py
+│   │   ├── pdf_loader.py
+│   │   ├── docx_loader.py
+│   │   ├── pptx_loader.py
+│   │   └── txt_loader.py
+│   │
+│   ├── retrieval/
+│   │   ├── __init__.py
+│   │   └── vector_search.py
+│   │
+│   └── generation/
+│       ├── __init__.py
+│       └── gemini.py
+│
+├── database/
+│   └── chroma/
+│
+├── materiais/
+├── ingest.py
+├── query.py
+├── requirements.txt
+├── .env
+├── .gitignore
+└── README.md
 
 ## Como rodar
 
@@ -48,12 +97,7 @@ Sua pergunta: O que é complexidade de tempo O(n log n)?
 Resposta: Segundo os materiais, complexidade O(n log n)...
 ```
 
-## Possíveis melhorias futuras
 
-- Interface web com Streamlit
-- Suporte a outros formatos (slides .pptx, anotações .txt)
-- Cache de respostas para perguntas repetidas
-- Avaliação automática da qualidade das respostas (RAGAS)
 
 ## Autor
 

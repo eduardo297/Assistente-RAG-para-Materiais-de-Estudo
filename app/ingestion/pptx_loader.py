@@ -12,7 +12,7 @@ def extrair_texto_pptx(caminho_pptx: str):
 
         for shape in slide.shapes:
 
-            if not hasattr(shape, "text_frame"):
+            if not shape.has_text_frame:
                 continue
 
             for paragrafo in shape.text_frame.paragraphs:

@@ -7,7 +7,7 @@ from google import genai
 load_dotenv()
 
 
-def criar_cliente():
+def criar_cliente_gemini():
     """Cria o cliente da API do Gemini."""
 
     return genai.Client(
