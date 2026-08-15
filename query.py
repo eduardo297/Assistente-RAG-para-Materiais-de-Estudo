@@ -20,7 +20,7 @@ from app.generation.gemini import (
 )
  
  
-QTD_CHUNKS_RECUPERADOS = 4
+QTD_CHUNKS_RECUPERADOS = 8
 DISTANCIA_MAXIMA = 1.1  # valor referente a distancia de cosseno (quanto menor, mais parecido com a pergunta)
  
 def main():

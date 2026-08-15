@@ -1,6 +1,6 @@
 from app.database.chroma import criar_cliente_chroma, obter_colecao
 from app.embeddings.embedding_model import criar_funcao_embedding
-
+from app.retrieval.reranking import reranking
 
 def conectar_colecao():
     """
@@ -20,7 +20,7 @@ def conectar_colecao():
     return colecao
 
 
-def buscar_documentos(colecao, pergunta: str, quantidade: int = 5, distancia_maxima: float | None = None):
+def buscar_documentos(colecao, pergunta: str, quantidade: int, distancia_maxima: float | None = None):
     """
     Busca no ChromaDB os documentos mais semelhantes
     semanticamente à pergunta.
@@ -61,4 +61,4 @@ def buscar_documentos(colecao, pergunta: str, quantidade: int = 5, distancia_max
     resultado["metadatas"][0] = metadados_filtrados
     resultado["distances"][0] = distancias_filtradas
 
-    return resultado
+    return reranking(documentos=resultado, pergunta=pergunta)
