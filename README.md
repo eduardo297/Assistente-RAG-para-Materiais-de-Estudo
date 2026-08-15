@@ -53,6 +53,7 @@ primeiro_rag/
 │   ├── retrieval/
 │   │   ├── __init__.py
 │   │   └── vector_search.py
+│   │   └── reranking.py
 │   │
 │   └── generation/
 │       ├── __init__.py
