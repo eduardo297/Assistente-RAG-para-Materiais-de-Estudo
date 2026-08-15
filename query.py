@@ -21,7 +21,7 @@ from app.generation.gemini import (
  
  
 QTD_CHUNKS_RECUPERADOS = 4
- 
+DISTANCIA_MAXIMA = 1.1  # valor referente a distancia de cosseno (quanto menor, mais parecido com a pergunta)
  
 def main():
  
@@ -57,7 +57,8 @@ def main():
         resultado = buscar_documentos(
             colecao,
             pergunta,
-            quantidade=QTD_CHUNKS_RECUPERADOS
+            quantidade=QTD_CHUNKS_RECUPERADOS,
+            distancia_maxima=DISTANCIA_MAXIMA 
         )
  
         trechos_recuperados = resultado["documents"][0]     
