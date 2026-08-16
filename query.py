@@ -21,7 +21,7 @@ from app.generation.gemini import (
  
  
 QTD_CHUNKS_RECUPERADOS = 8
-DISTANCIA_MAXIMA = 1.1  # valor referente a distancia de cosseno (quanto menor, mais parecido com a pergunta)
+DISTANCIA_MAXIMA = 0.4 # valor referente a distancia euclidiana ao quadrado, que é o padrão do ChromaDB. Quanto menor, mais parecido com a pergunta.
  
 def main():
  
@@ -87,10 +87,12 @@ def main():
         print("Fontes:")
  
         distancias_recuperadas = resultado["distances"][0]
- 
-        for metadata, distancia in zip(
+        reranking_scores = resultado["reranking_scores"][0]
+
+        for metadata, distancia, reranking_score in zip(
             metadados_recuperados,
-            distancias_recuperadas
+            distancias_recuperadas,
+            reranking_scores
         ):
  
             fonte = metadata.get("fonte", "desconhecida")
@@ -105,6 +107,7 @@ def main():
             # Rode várias perguntas e observe esses valores para
             # decidir depois um bom DISTANCIA_MAXIMA.
             print(f" (distância: {distancia:.3f})", end="")
+            print(f" (reranking score: {reranking_score:.3f})", end="")
  
             print()
  

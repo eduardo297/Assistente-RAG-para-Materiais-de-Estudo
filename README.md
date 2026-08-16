@@ -1,26 +1,62 @@
-# Assistente RAG para Materiais de Estudo
+## 📌 Visão Geral
 
-Assistente de perguntas e respostas que usa **RAG (Retrieval-Augmented Generation)**
-para responder dúvidas com base em PDFs de materiais de estudo da faculdade.
+O objetivo principal deste projeto é atuar como um assistente inteligente capaz de responder a dúvidas sobre materiais de estudo utilizando **exclusivamente informações extraídas e validadas dos documentos fornecidos**. 
 
-## Como funciona
+Diferente de consultas diretas a Large Language Models (LLMs), este sistema garante respostas grounded (ancoradas no texto original), minimizando alucinações e oferecendo controle sobre o contexto recuperado.
 
-O projeto é dividido em quatro etapas principais:
+---
+
+## 🛠️ Conceitos e Técnicas Exploradas
+
+Este repositório foi construído para testar e validar diversas etapas cruciais na construção de pipelines RAG modernos:
+
+- **Ingestão e Processamento de Documentos:** Carregamento e sanitização de dados textuais.
+- **Estratégias de Chunking:** Divisão de documentos em blocos semanticamente relevantes.
+- **Embeddings:** Vetorização de texto para representação em espaço vetorial.
+- **Busca Vetorial & Banco de Dados Vetorial:** Armazenamento e consulta de alta performance com **ChromaDB**.
+- **Threshold de Relevância / Distância:** Filtragem inicial por métricas de similaridade vetorial.
+- **Reranking:** Reordenação dos candidatos recuperados usando Cross-Encoder (`intfloat/multilingual-e5-small`).
+- **Filtro de Relevância por Score:** Aplicação de *score cutoff* para descartar trechos irrelevantes antes do envio à LLM.
+- **Engenharia de Contexto:** Formatação e estruturação otimizada dos prompts.
+- **Integração com LLM:** Geração de respostas via **Google GenAI (Gemini)**.
+- **Controle de Alucinações:** Restrição estrita de resposta baseada estritamente no contexto fornecido.
+- **Rastreabilidade e Metadados:** Preservação da origem e fonte dos trechos recuperados.
+
+---
+
+## 🧠 Arquitetura e Fluxo do RAG
+
+O pipeline de recuperação e geração segue o fluxo detalhado abaixo:
 
 ```text
-Materiais
-   ↓
-Ingestão
-   ↓
-Chunks + Embeddings
-   ↓
-ChromaDB
-   ↓
-Busca semântica
-   ↓
-Google Gemini
-   ↓
-Resposta
+                     [ PERGUNTA ]
+                          │
+                          ▼
+                Modelo de Embedding
+                          │
+                          ▼
+                 Busca no ChromaDB
+                          │
+                          ▼
+               Threshold de Distância
+                          │
+                          ▼
+                     Candidatos
+                          │
+                          ▼
+            Reranking (Cross-Encoder)
+                          │
+                          ▼
+               Filtro de Score Mínimo
+                          │
+                          ▼
+                   Contexto Final
+                          │
+                          ▼
+             Google Gemini API (LLM)
+                          │
+                          ▼
+                     [ RESPOSTA ]
 
 ## Stack
 

@@ -6,6 +6,7 @@ modelo_reranker = CrossEncoder(
 )
 
 TOP_K = 3
+LIMITADOR_DE_SCORE = -2
 
 
 def reranking(documentos, pergunta: str):
@@ -32,13 +33,18 @@ def reranking(documentos, pergunta: str):
             pontuacoes
         )
     )
-
+    
+    
     resultados.sort(
         key=lambda x: x[3],
         reverse=True
     )
-
-    melhores_resultados = resultados[:TOP_K]
+    
+    # Aplica o filtro de score mínimo e limita ao TOP_K
+    melhores_resultados = [
+        resultado for resultado in resultados 
+        if resultado[3] >= LIMITADOR_DE_SCORE
+    ][:TOP_K]
 
     documentos["documents"][0] = [
         resultado[0]
