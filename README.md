@@ -1,8 +1,10 @@
+# 📚 Assistente de Estudos com RAG
+
 ## 📌 Visão Geral
 
-O objetivo principal deste projeto é atuar como um assistente inteligente capaz de responder a dúvidas sobre materiais de estudo utilizando **exclusivamente informações extraídas e validadas dos documentos fornecidos**. 
+O objetivo principal deste projeto é atuar como um assistente inteligente capaz de responder a dúvidas sobre materiais de estudo utilizando **exclusivamente informações extraídas e validadas dos documentos fornecidos**.
 
-Diferente de consultas diretas a Large Language Models (LLMs), este sistema garante respostas grounded (ancoradas no texto original), minimizando alucinações e oferecendo controle sobre o contexto recuperado.
+Diferente de consultas diretas a Large Language Models (LLMs), este sistema garante respostas *grounded* (ancoradas no texto original), minimizando alucinações e oferecendo controle total sobre o contexto recuperado.
 
 ---
 
@@ -10,17 +12,18 @@ Diferente de consultas diretas a Large Language Models (LLMs), este sistema gara
 
 Este repositório foi construído para testar e validar diversas etapas cruciais na construção de pipelines RAG modernos:
 
-- **Ingestão e Processamento de Documentos:** Carregamento e sanitização de dados textuais.
-- **Estratégias de Chunking:** Divisão de documentos em blocos semanticamente relevantes.
-- **Embeddings:** Vetorização de texto para representação em espaço vetorial.
-- **Busca Vetorial & Banco de Dados Vetorial:** Armazenamento e consulta de alta performance com **ChromaDB**.
-- **Threshold de Relevância / Distância:** Filtragem inicial por métricas de similaridade vetorial.
-- **Reranking:** Reordenação dos candidatos recuperados usando Cross-Encoder (`intfloat/multilingual-e5-small`).
-- **Filtro de Relevância por Score:** Aplicação de *score cutoff* para descartar trechos irrelevantes antes do envio à LLM.
-- **Engenharia de Contexto:** Formatação e estruturação otimizada dos prompts.
-- **Integração com LLM:** Geração de respostas via **Google GenAI (Gemini)**.
-- **Controle de Alucinações:** Restrição estrita de resposta baseada estritamente no contexto fornecido.
-- **Rastreabilidade e Metadados:** Preservação da origem e fonte dos trechos recuperados.
+- **Ingestão e Processamento de Documentos:** carregamento e sanitização de dados textuais (PDF, DOCX, PPTX, TXT).
+- **Estratégias de Chunking:** divisão de documentos em blocos semanticamente relevantes, respeitando limites de frases.
+- **Embeddings:** vetorização de texto para representação em espaço vetorial (via `sentence-transformers`, local e sem custo).
+- **Busca Vetorial & Banco de Dados Vetorial:** armazenamento e consulta de alta performance com **ChromaDB**.
+- **Threshold de Relevância / Distância:** filtragem inicial por métricas de similaridade vetorial.
+- **Reranking:** reordenação dos candidatos recuperados usando Cross-Encoder (`intfloat/multilingual-e5-small`).
+- **Filtro de Relevância por Score:** aplicação de *score cutoff* para descartar trechos irrelevantes antes do envio à LLM.
+- **Engenharia de Contexto:** formatação e estruturação otimizada dos prompts.
+- **Integração com LLM:** geração de respostas via **Google GenAI (Gemini)**.
+- **Controle de Alucinações:** restrição estrita de resposta baseada estritamente no contexto fornecido.
+- **Rastreabilidade e Metadados:** preservação da origem e fonte dos trechos recuperados (arquivo, página/parágrafo/slide).
+- **Cache de Ingestão:** controle via hash de arquivo para evitar reprocessamento desnecessário em execuções repetidas.
 
 ---
 
@@ -57,33 +60,46 @@ O pipeline de recuperação e geração segue o fluxo detalhado abaixo:
                           │
                           ▼
                      [ RESPOSTA ]
+```
 
-## Stack
+---
+
+## 💻 Interface Web (Streamlit)
+
+Além do modo terminal, o projeto conta com uma **interface web interativa via Streamlit**, que permite:
+
+- Fazer perguntas em um formato de chat, com histórico de conversa mantido durante a sessão.
+- Visualizar as **fontes** de cada resposta (arquivo, página/parágrafo, distância e score de reranking).
+- **Fazer upload de novos materiais diretamente pela interface**, sem precisar mexer manualmente na pasta `materiais/` ou rodar o script de ingestão pelo terminal — o próprio app cuida de salvar o arquivo e reindexá-lo.
+
+---
+
+## 🧱 Stack
 
 - **Python**
 - **ChromaDB** — banco vetorial local
 - **sentence-transformers** — geração de embeddings (roda localmente, sem custo)
-- **gemini API (Google)** — geração da resposta final
+- **Streamlit** — interface web
+- **Gemini API (Google)** — geração da resposta final
 
-## estrutura atual 
+---
 
+## 📂 Estrutura do Repositório
+
+```
 primeiro_rag/
 │
 ├── app/
-│   ├── database/
-│   │   ├── __init__.py
-│   │   └── chroma.py
-│   │
 │   ├── core/
-│   │   ├── __init__.py
 │   │   └── assistente.py
 │   │
+│   ├── database/
+│   │   └── chroma.py
+│   │
 │   ├── embeddings/
-│   │   ├── __init__.py
 │   │   └── embedding_model.py
 │   │
 │   ├── ingestion/
-│   │   ├── __init__.py
 │   │   ├── loader.py
 │   │   ├── pdf_loader.py
 │   │   ├── docx_loader.py
@@ -91,16 +107,15 @@ primeiro_rag/
 │   │   └── txt_loader.py
 │   │
 │   ├── retrieval/
-│   │   ├── __init__.py
-│   │   └── vector_search.py
+│   │   ├── vector_search.py
 │   │   └── reranking.py
 │   │
 │   └── generation/
-│       ├── __init__.py
 │       └── gemini.py
 │
 ├── database/
-│   └── chroma/
+│   ├── chroma/
+│   └── processed_files.json
 │
 ├── materiais/
 ├── ingest.py
@@ -110,37 +125,71 @@ primeiro_rag/
 ├── .env
 ├── .gitignore
 └── README.md
+```
 
-## Como rodar
+---
+
+## ✅ Requisitos
+
+- Python 3.10+
+- Instale as dependências:
 
 ```bash
-# 1. Instalar dependências
 pip install -r requirements.txt
+```
 
-# 2. Colocar os PDFs na pasta materiais/
-mkdir materiais
-# copie seus PDFs para dentro dela
+---
 
-# 3. Indexar os materiais
-python ingest.py
+## 🚀 Uso Rápido
 
-# 4. Criar arquivo .env com sua chave de API
+### 1. Configure sua chave da API Gemini
+
+```bash
 echo "GEMINI_API_KEY=sua_chave_aqui" > .env
+```
 
-# 5. Fazer perguntas
+### 2. Adicione seus materiais
+
+Coloque arquivos `.pdf`, `.docx`, `.pptx` ou `.txt` na pasta `materiais/` — ou envie-os diretamente pela interface Streamlit (veja abaixo).
+
+### 3. Indexe os documentos
+
+```bash
+python ingest.py
+```
+
+O script gera embeddings, quebra os documentos em chunks e popula o ChromaDB. Arquivos já processados (identificados por hash de conteúdo) são pulados automaticamente em execuções futuras, tornando reindexações incrementais rápidas.
+
+### 4. Converse com o assistente
+
+**Via terminal:**
+
+```bash
 python query.py
 ```
 
-## Exemplo de uso
+**Via interface web:**
 
-```
-Sua pergunta: O que é complexidade de tempo O(n log n)?
-
-Resposta: Segundo os materiais, complexidade O(n log n)...
+```bash
+streamlit run app_streamlit.py
 ```
 
+Na interface, é possível fazer upload de novos materiais e perguntar diretamente sobre eles, sem sair do navegador.
 
+---
 
-## Autor
+## 📝 Notas e Boas Práticas
 
-Eduardo Santiago Bearzi
+- Ao adicionar novos documentos manualmente na pasta `materiais/`, rode `python ingest.py` para atualizar o índice.
+- Se trocar o modelo de embeddings, reindexe todos os documentos do zero.
+- Para reindexar do zero, remova `database/chroma/` e `database/processed_files.json` antes de rodar `ingest.py` novamente.
+- Ajuste parâmetros de busca, threshold de distância e reranking em `app/retrieval/` conforme necessário.
+
+---
+
+## 🔭 Próximos Passos
+
+- [ ] Avaliação automatizada de qualidade das respostas (ex: RAGAS)
+- [ ] Dockerfile para facilitar execução local
+- [ ] Testes automatizados com pytest
+- [ ] CI básico via GitHub Actions
