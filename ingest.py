@@ -409,7 +409,7 @@ def main():
             ids=ids,
             metadatas=metadados
         )
-
+        cache[nome_arquivo] = hash_atual
         total_chunks += len(documentos)
         
         print(

@@ -74,6 +74,10 @@ primeiro_rag/
 │   │   ├── __init__.py
 │   │   └── chroma.py
 │   │
+│   ├── core/
+│   │   ├── __init__.py
+│   │   └── assistente.py
+│   │
 │   ├── embeddings/
 │   │   ├── __init__.py
 │   │   └── embedding_model.py
@@ -101,6 +105,7 @@ primeiro_rag/
 ├── materiais/
 ├── ingest.py
 ├── query.py
+├── app_streamlit.py
 ├── requirements.txt
 ├── .env
 ├── .gitignore
