@@ -8,6 +8,9 @@ banco_vetorial/
 # PDFs pessoais (opcional - remova esta linha se quiser versionar os materiais)
 materiais/
 
+# Arquivos de cache e temporários
+database/processed_files.json
+
 # Python
 __pycache__/
 *.pyc
