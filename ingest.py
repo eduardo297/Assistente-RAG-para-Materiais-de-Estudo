@@ -15,6 +15,11 @@ import app.embeddings.embedding_model as embedding_model
 import app.ingestion.loader as loader
 from app.database.chroma import criar_cliente_chroma, obter_colecao
 
+import re
+import hashlib
+import json
+
+CACHE_PATH = os.path.join("database", "processed_files.json")
 
 PASTA_MATERIAIS = "materiais"
 
@@ -28,7 +33,27 @@ EXTENSOES_SUPORTADAS = {
     ".pptx"
 }
 
-import re
+def calcular_hash_arquivo(caminho: str) -> str:
+    """Gera um hash SHA-256 do conteúdo do arquivo."""
+    hasher = hashlib.sha256()
+    with open(caminho, "rb") as f:
+        for bloco in iter(lambda: f.read(8192), b""):
+            hasher.update(bloco)
+    return hasher.hexdigest()
+
+
+def carregar_cache() -> dict:
+    """Carrega o registro de arquivos já processados (nome -> hash)."""
+    if os.path.exists(CACHE_PATH):
+        with open(CACHE_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+
+def salvar_cache(cache: dict) -> None:
+    os.makedirs(os.path.dirname(CACHE_PATH), exist_ok=True)
+    with open(CACHE_PATH, "w", encoding="utf-8") as f:
+        json.dump(cache, f, ensure_ascii=False, indent=2)
 
 
 def dividir_texto_grande(
@@ -236,12 +261,23 @@ def main():
 
     total_chunks = 0
 
+    cache = carregar_cache()
+
     for nome_arquivo in arquivos:
 
         caminho = os.path.join(
             PASTA_MATERIAIS,
             nome_arquivo
         )
+
+        hash_atual = calcular_hash_arquivo(caminho)
+
+        if cache.get(nome_arquivo) == hash_atual:
+            print(
+                f"  -> Arquivo '{nome_arquivo}' "
+                "sem alterações, pulando."
+            )
+            continue
 
         print(
             f"\nProcessando: {nome_arquivo}"
@@ -375,13 +411,13 @@ def main():
         )
 
         total_chunks += len(documentos)
-
+        
         print(
             f"  -> {len(documentos)} pedaços indexados"
         )
 
 
-
+    salvar_cache(cache)
     print(
         f"\nConcluído! {total_chunks} pedaços "
         "de texto indexados no ChromaDB."
