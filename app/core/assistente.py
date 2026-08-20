@@ -37,10 +37,11 @@ def responder_pergunta(cliente_gemini, colecao, pergunta: str) -> dict:
         {
             "fonte": m.get("fonte", "desconhecida"),
             "paragrafo": m.get("paragrafo"),
+            "texto": t,
             "distancia": d,
             "score": s,
         }
-        for m, d, s in zip(metadados, distancias, scores)
+        for m,t, d, s in zip(metadados, trechos, distancias, scores)
     ]
 
     return {"resposta": resposta, "fontes": fontes}

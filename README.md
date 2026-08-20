@@ -117,6 +117,11 @@ primeiro_rag/
 │   ├── chroma/
 │   └── processed_files.json
 │
+├── eval/
+│   ├── dataset_avaliacao.json
+│   ├── ragas_evaluate.py
+│   └── requirements-eval.txt
+│
 ├── materiais/
 ├── ingest.py
 ├── query.py
@@ -178,6 +183,28 @@ Na interface, é possível fazer upload de novos materiais e perguntar diretamen
 
 ---
 
+## 📊 Avaliação com RAGAS
+
+O projeto inclui um script de avaliação automatizada usando **[RAGAS](https://github.com/explodinggradients/ragas)**, que mede a qualidade das respostas do pipeline com métricas como *faithfulness* (fidelidade ao contexto), *answer relevancy* e *context precision*.
+
+Como o RAGAS depende de uma árvore de pacotes (LangChain) que pode conflitar com as dependências do app principal, ele roda em um **venv separado**:
+
+```bash
+python -m venv venv_eval
+venv_eval\Scripts\activate
+pip install -r eval\requirements-eval.txt
+```
+
+Depois, com o venv de avaliação ativo e a partir da raiz do projeto:
+
+```bash
+python eval\ragas_evaluate.py
+```
+
+O script usa o **Gemini** como LLM juiz (em vez do padrão OpenAI do RAGAS), reaproveitando a mesma `GEMINI_API_KEY` do `.env`. As perguntas e respostas esperadas ficam em `eval/dataset_avaliacao.json` — vale montar um conjunto pequeno (10-20 perguntas) cobrindo bem os materiais indexados.
+
+---
+
 ## 📝 Notas e Boas Práticas
 
 - Ao adicionar novos documentos manualmente na pasta `materiais/`, rode `python ingest.py` para atualizar o índice.
@@ -189,7 +216,6 @@ Na interface, é possível fazer upload de novos materiais e perguntar diretamen
 
 ## 🔭 Próximos Passos
 
-- [ ] Avaliação automatizada de qualidade das respostas (ex: RAGAS)
 - [ ] Dockerfile para facilitar execução local
 - [ ] Testes automatizados com pytest
 - [ ] CI básico via GitHub Actions
