@@ -1,5 +1,6 @@
 import os
-from time import time
+os.environ["RAGAS_DO_NOT_TRACK"] = "true"
+
 from dotenv import load_dotenv
 from ragas import evaluate
 from ragas.metrics import faithfulness, answer_relevancy, context_precision
@@ -9,6 +10,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmb
 from datasets import Dataset
 import json
 import sys
+
+
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -27,8 +30,11 @@ def main():
 
     registros = []
     for item in perguntas_teste:
-        resultado = responder_pergunta(cliente_gemini, colecao, item["pergunta"])
-        time.sleep(6)  # Adiciona um pequeno atraso para evitar sobrecarga de solicitações
+        try:
+            resultado = responder_pergunta(cliente_gemini, colecao, item["pergunta"])
+        except Exception as erro:
+            print(f"  -> Erro ao processar '{item['pergunta']}': {erro}")
+            continue
         registros.append({
             "question": item["pergunta"],
             "answer": resultado["resposta"],

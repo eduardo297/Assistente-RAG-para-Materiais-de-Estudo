@@ -2,7 +2,8 @@ import os
 
 from dotenv import load_dotenv
 from google import genai
-
+import time
+from google.genai import errors as genai_errors
 
 load_dotenv()
 
@@ -44,23 +45,32 @@ PERGUNTA:
 """
 
 
-def gerar_resposta(
-    cliente,
-    pergunta: str,
-    trechos: list[str]
-):
-    """
-    Gera uma resposta usando os trechos recuperados.
-    """
 
+def gerar_resposta(cliente, pergunta: str, trechos: list[str], max_tentativas: int = 5) -> str:
+    """Gera a resposta via Gemini, com retry em caso de sobrecarga do servidor (503)."""
+
+   
     prompt = montar_prompt(
-        pergunta,
-        trechos
-    )
+            pergunta,
+            trechos
+        )
+    for tentativa in range(1, max_tentativas + 1):
+        try:
+            resposta = cliente.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt
+                )
+            return resposta.text
 
-    resposta = cliente.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt
-    )
+        except genai_errors.ServerError as erro:
+            if tentativa == max_tentativas:
+                raise
 
-    return resposta.text
+            espera = 2 ** tentativa  # 2s, 4s, 8s, 16s, 32s
+            print(
+                f"  -> Gemini sobrecarregado (tentativa {tentativa}/{max_tentativas}), "
+                f"aguardando {espera}s..."
+            )
+            time.sleep(espera)
+
+
