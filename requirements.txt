@@ -7,3 +7,10 @@ python-pptx==1.0.2
 google-genai==2.17.0
 python-dotenv==1.0.1
 streamlit==1.30.0
+ragas==0.1.9
+langchain==0.1.20
+langchain_community==0.0.38
+langchain_core==0.1.52
+langchain_google_genai==0.0.11
+datasets
+python-dotenv==1.0.1
