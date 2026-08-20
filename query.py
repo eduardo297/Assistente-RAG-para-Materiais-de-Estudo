@@ -79,7 +79,10 @@ def main():
             pergunta,
             trechos_recuperados
         )
- 
+
+        
+
+
         print(
             f"\nResposta: {resposta}\n"
         )
@@ -108,8 +111,8 @@ def main():
             # decidir depois um bom DISTANCIA_MAXIMA.
             print(f" (distância: {distancia:.3f})", end="")
             print(f" (reranking score: {reranking_score:.3f})", end="")
- 
-            print()
+        
+            
  
         print()
  

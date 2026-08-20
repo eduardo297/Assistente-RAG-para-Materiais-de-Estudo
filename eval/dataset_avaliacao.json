@@ -1,0 +1,22 @@
+[
+  {
+    "pergunta": "O que e uma arvore binaria de busca (BST) e qual e a propriedade principal de seus nos?",
+    "resposta_esperada": "E uma estrutura de dados em arvore onde cada no tem no maximo dois filhos. A propriedade principal e que todos os valores a esquerda de um no sao menores que ele, e todos os valores a direita sao maiores."
+  },
+  {
+    "pergunta": "Qual e a diferenca basica entre uma lista encadeada e um grafo?",
+    "resposta_esperada": "Uma lista encadeada e uma estrutura linear onde cada elemento aponta apenas para o proximo (e/ou anterior), enquanto um grafo e uma estrutura nao linear composta por vertices e arestas, permitindo conexoes arbitratrias e ciclos."
+  },
+  {
+    "pergunta": "O que é POO e quais sao seus principais conceitos?",
+    "resposta_esperada": "POO (Programacao Orientada a Objetos) e um paradigma de programacao que organiza o codigo em torno de objetos, que sao instancias de classes. Seus principais conceitos sao encapsulamento, heranca e polimorfismo."
+  },
+  {
+    "pergunta": "O que sao vertices e arestas em um grafo?",
+    "resposta_esperada": "Vertices (ou nos) sao os pontos de dados que compoem o grafo, e arestas sao as linhas ou conexoes que ligam um par de vertices."
+  },
+  {
+    "pergunta": "Qual e a diferenca entre um grafo direcionado (digrafo) e um grafo nao direcionado?",
+    "resposta_esperada": "Em um grafo direcionado, as arestas possuem um sentido definido (indo de um no origem para um destino). Em um grafo nao direcionado, as conexoes sao bidirecionais e nao possuem sentido."
+  }
+]
